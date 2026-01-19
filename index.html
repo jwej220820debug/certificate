@@ -285,14 +285,16 @@
 
         // Q-Net API Endpoints
         const LIST_API = 'http://openapi.q-net.or.kr/api/service/rest/InquiryListNationalQualifcationSVC/getList';
-        const SCHEDULE_API = 'http://openapi.q-net.or.kr/api/service/rest/InquiryTestInformationNTQSVC/getTestScheduleList';
+        const SCHEDULE_API = 'http://openapi.q-net.or.kr/api/service/rest/InquiryTestInformationNTQSVC/getCList';
 
         async function fetchData(url) {
             try {
                 const response = await fetch(`${PROXY}${encodeURIComponent(url)}`);
                 const data = await response.json();
                 const parser = new DOMParser();
-                return parser.parseFromString(data.contents, "text/xml");
+                const xml = parser.parseFromString(data.contents, "text/xml");
+                console.log("API Response for:", url, xml);
+                return xml;
             } catch (e) {
                 console.error("Fetch Error:", e);
                 return null;
@@ -311,11 +313,12 @@
             displayUI.classList.remove('active');
             loadingUI.style.display = 'block';
 
+            // Use jmCd list API
             const xml = await fetchData(`${LIST_API}?serviceKey=${API_KEY}`);
             loadingUI.style.display = 'none';
 
-            if (!xml) {
-                alert("API 데이터를 불러오는 데 실패했습니다.");
+            if (!xml || xml.getElementsByTagName('resultCode')[0]?.textContent !== '00') {
+                alert("종목 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.");
                 return;
             }
 
@@ -328,15 +331,13 @@
                 const code = item.getElementsByTagName('jmcd')[0]?.textContent ||
                     item.getElementsByTagName('jmCd')[0]?.textContent || "";
 
-                // Filter by query and specifically "Craftsman (기능사)" if needed, 
-                // but the user said "기능사 시험 종목의 일부 이름을 검색"
                 if (name.includes(query) && name.includes('기능사')) {
                     matches.push({ name, code });
                 }
             }
 
             if (matches.length === 0) {
-                alert("기능사 종목 중 일치하는 결과가 없습니다. '기능사'를 포함하여 입력해보세요.");
+                alert("기능사 종목 중 일치하는 결과가 없습니다. '기능사'를 포함해 정확히 입력해보세요.");
                 return;
             }
 
@@ -356,13 +357,13 @@
             document.getElementById('loading').style.display = 'block';
             document.getElementById('schedule-display').classList.remove('active');
 
-            // Fetch Schedule
+            // Fetch Schedule (Generic list for the year)
             const url = `${SCHEDULE_API}?serviceKey=${API_KEY}`;
             const xml = await fetchData(url);
             document.getElementById('loading').style.display = 'none';
 
-            if (!xml) {
-                alert("일정 데이터를 불러올 수 없거나 2026년 일정이 아직 공지되지 않았습니다.");
+            if (!xml || xml.getElementsByTagName('resultCode')[0]?.textContent !== '00') {
+                alert("일정 데이터를 불러오지 못했습니다. API 제한이거나 연도별 일정이 아직 업데이트되지 않았을 수 있습니다.");
                 return;
             }
 
@@ -373,33 +374,28 @@
             document.getElementById('displayQualName').innerText = name;
             document.getElementById('displayQualCode').innerText = `종목코드: ${code}`;
 
+            const getTag = (el, tagName) => el.getElementsByTagName(tagName)[0]?.textContent ||
+                el.getElementsByTagName(tagName.toLowerCase())[0]?.textContent || "";
+
             let found = false;
             for (let item of items) {
-                const desc = item.getElementsByTagName('description')[0]?.textContent || "";
-                // We focus on 2026 (or early 2026)
-                // Note: Q-Net API usually returns current/upcoming. 
-                // In Jan 2026, it should return 2026 schedules.
+                const title = getTag(item, 'description') || getTag(item, 'contents');
 
-                const regStart = item.getElementsByTagName('psexamstartdt')[0]?.textContent || "-";
-                const regEnd = item.getElementsByTagName('psexamenddt')[0]?.textContent || "-";
-                const testStart = item.getElementsByTagName('psexamstartdt')[0]?.textContent || "-"; // Placeholder
+                // Only show relevant rounds (Craftsman = 기능사)
+                if (!title || !title.includes('기능사')) continue;
 
-                // Since Q-Net API tag names vary wildly by service, 
-                // I'll map common ones for a professional look.
                 const data = {
-                    title: desc,
-                    docReg: `${formatDate(item.getElementsByTagName('docregstartdt')[0]?.textContent)} ~ ${formatDate(item.getElementsByTagName('docregenddt')[0]?.textContent)}`,
-                    docExam: formatDate(item.getElementsByTagName('docexamstartdt')[0]?.textContent),
-                    pracReg: `${formatDate(item.getElementsByTagName('pracregstartdt')[0]?.textContent)} ~ ${formatDate(item.getElementsByTagName('pracregenddt')[0]?.textContent)}`,
-                    pracExam: `${formatDate(item.getElementsByTagName('pracexamstartdt')[0]?.textContent)} ~ ${formatDate(item.getElementsByTagName('pracexamenddt')[0]?.textContent)}`,
-                    passDate: formatDate(item.getElementsByTagName('pracpassstartdt')[0]?.textContent)
+                    title: title,
+                    docReg: `${formatDate(getTag(item, 'docRegStartDt'))} ~ ${formatDate(getTag(item, 'docRegEndDt'))}`,
+                    docExam: formatDate(getTag(item, 'docExamStartDt')),
+                    pracReg: `${formatDate(getTag(item, 'pracRegStartDt'))} ~ ${formatDate(getTag(item, 'pracRegEndDt'))}`,
+                    pracExam: `${formatDate(getTag(item, 'pracExamStartDt'))} ~ ${formatDate(getTag(item, 'pracExamEndDt'))}`,
+                    passDate: formatDate(getTag(item, 'pracPassStartDt') || getTag(item, 'pracPassDt'))
                 };
 
-                // Only show if it matches the current context (usually all items returned are relevant)
-                if (data.title) {
-                    const div = document.createElement('div');
-                    div.className = 'schedule-item';
-                    div.innerHTML = `
+                const div = document.createElement('div');
+                div.className = 'schedule-item';
+                div.innerHTML = `
                     <div class="schedule-title">${data.title}</div>
                     <div class="date-grid">
                         <div class="date-box">
@@ -424,13 +420,12 @@
                         </div>
                     </div>
                 `;
-                    scheduleList.appendChild(div);
-                    found = true;
-                }
+                scheduleList.appendChild(div);
+                found = true;
             }
 
             if (!found) {
-                scheduleList.innerHTML = `<p style="text-align:center; padding: 2rem; color:var(--text-muted);">표시할 2026년 일정이 없습니다.</p>`;
+                scheduleList.innerHTML = `<p style="text-align:center; padding: 2rem; color:var(--text-muted);">표시할 2026년 기능사 일정이 없습니다.</p>`;
             }
 
             document.getElementById('schedule-display').classList.add('active');
