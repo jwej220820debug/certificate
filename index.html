@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>국가기술자격 통계 조회 (Q-Net)</title>
+    <title>국가기술자격 통계 조회 시스템</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -265,8 +265,8 @@
 
     <div class="container">
         <header>
-            <h1>Q-Net Qualification Statistics</h1>
-            <p class="subtitle">Search for national qualification statistics and trends</p>
+            <h1>국가기술자격 통계 조회 시스템</h1>
+            <p class="subtitle">Q-Net 오픈데이터 기반 자격증 합격률 및 취득 현황</p>
         </header>
 
         <div class="card">
@@ -408,12 +408,14 @@
 
                 for (let i = 0; i < items.length; i++) {
                     const item = items[i];
-                    // Q-Net XML often uses jmNm or jmfldnm
+                    // Q-Net API에 따라 jmNm 또는 jmfldnm 태그를 혼용해서 사용함
                     const jmNm = item.getElementsByTagName('jmNm')[0]?.textContent ||
-                        item.getElementsByTagName('jmfldnm')[0]?.textContent || "";
+                        item.getElementsByTagName('jmfldnm')[0]?.textContent ||
+                        item.getElementsByTagName('jmfldNm')[0]?.textContent || ""; // 대소문자 변종 대응
                     const jmCd = item.getElementsByTagName('jmCd')[0]?.textContent || "";
 
-                    if (jmNm.toLowerCase().includes(name.toLowerCase())) {
+                    // 한글 포함 여부 확인 (공백 제거 후 비교하여 검색 효율 증대)
+                    if (jmNm.replace(/\s/g, '').includes(name.replace(/\s/g, ''))) {
                         matches.push({ name: jmNm, code: jmCd });
                     }
                 }
