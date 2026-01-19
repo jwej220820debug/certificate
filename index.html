@@ -411,7 +411,9 @@
             for (let item of items) {
                 const title = item.simulated ? item.description : (getTag(item, 'description') || getTag(item, 'contents') || getTag(item, 'examNm'));
 
-                if (!title || (!title.includes('기능사') && !item.simulated)) continue;
+                // 정기 기능사 1회~4회만 필터링
+                const isRegularCraftsman = title.includes('기능사') && /([1-4])회/.test(title);
+                if (!title || !isRegularCraftsman) continue;
 
                 const data = {
                     title: title,
