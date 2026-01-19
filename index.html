@@ -4,87 +4,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2025년 국가기술자격 통계 조회 시스템</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <title>2026 국가기술자격 시험 일정 조회 (기능사)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #6366f1;
-            --primary-hover: #4f46e5;
-            --bg-color: #0f172a;
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --accent: #10b981;
+            --bg: #0f172a;
             --card-bg: rgba(30, 41, 59, 0.7);
-            --text-color: #f8fafc;
+            --text: #f8fafc;
             --text-muted: #94a3b8;
-            --border-color: rgba(148, 163, 184, 0.1);
-            --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.1);
         }
 
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Inter', sans-serif;
+            box-sizing: border-box;
         }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            background-image:
-                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(20, 184, 166, 0.15) 0px, transparent 50%);
-            background-attachment: fixed;
+            font-family: 'Pretendard', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
             min-height: 100vh;
-            padding: 2rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            padding: 2rem 1rem;
+            background-image:
+                radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.05) 0px, transparent 50%);
         }
 
         .container {
-            max-width: 1000px;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
         }
 
         header {
             text-align: center;
-            margin-bottom: 2rem;
-            animation: fadeInDown 0.8s ease-out;
+            margin-bottom: 3rem;
         }
 
         h1 {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+            background: linear-gradient(to right, #60a5fa, #34d399);
             -webkit-background-clip: text;
-            background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 0.5rem;
         }
 
         .subtitle {
             color: var(--text-muted);
-            font-size: 1.1rem;
+            font-size: 1rem;
         }
 
-        .card {
+        /* Search Section */
+        .search-container {
+            position: relative;
             background: var(--card-bg);
             backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: var(--glass-border);
-            border-radius: 16px;
-            padding: 2rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            width: 100%;
-        }
-
-        .search-section {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
         }
 
         .input-group {
@@ -92,107 +76,172 @@
             gap: 0.5rem;
         }
 
-        input[type="text"] {
+        input {
             flex: 1;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            padding: 1rem 1.5rem;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--glass-border);
             border-radius: 12px;
+            padding: 0.8rem 1.2rem;
+            color: white;
             font-size: 1rem;
             outline: none;
         }
 
+        input:focus {
+            border-color: var(--primary);
+        }
+
         button {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+            background: var(--primary);
             color: white;
             border: none;
-            padding: 0 2rem;
+            padding: 0.8rem 1.5rem;
             border-radius: 12px;
             font-weight: 600;
             cursor: pointer;
+            transition: 0.2s;
         }
 
-        .selection-list {
-            max-height: 300px;
+        button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        /* Search Results List */
+        #search-results {
+            list-style: none;
+            margin-top: 1rem;
+            max-height: 250px;
             overflow-y: auto;
-            background: rgba(15, 23, 42, 0.4);
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
             display: none;
+            border-top: 1px solid var(--glass-border);
+            padding-top: 1rem;
         }
 
-        .selection-list.active {
+        #search-results li {
+            padding: 0.8rem 1.2rem;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #search-results li:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        #search-results li .code {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Schedule Display */
+        .schedule-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .schedule-card.active {
             display: block;
         }
 
-        .selection-item {
-            padding: 1rem 1.5rem;
-            cursor: pointer;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
+        .schedule-header {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--glass-border);
         }
 
-        .selection-item:hover {
-            background: rgba(99, 102, 241, 0.2);
+        .qual-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
         }
 
-        .results-grid {
+        .schedule-item {
+            background: rgba(15, 23, 42, 0.4);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--primary);
+        }
+
+        .schedule-title {
+            font-weight: 700;
+            color: #60a5fa;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .date-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
         }
 
-        .results-grid.active {
-            display: grid;
+        .date-box {
+            font-size: 0.9rem;
         }
 
-        .chart-container {
-            position: relative;
-            height: 250px;
-            margin-top: 1rem;
+        .date-label {
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 0.2rem;
         }
 
-        h2 {
-            font-size: 1.2rem;
-            color: var(--text-color);
-            border-left: 4px solid var(--primary-color);
-            padding-left: 0.8rem;
+        .date-value {
+            font-weight: 600;
+            color: var(--text);
         }
 
         .loading {
-            text-align: center;
-            padding: 2rem;
             display: none;
+            text-align: center;
+            margin: 1rem 0;
         }
 
         .spinner {
             width: 24px;
             height: 24px;
             border: 3px solid rgba(255, 255, 255, 0.1);
-            border-top-color: var(--primary-color);
+            border-top-color: var(--primary);
             border-radius: 50%;
             animation: spin 1s linear infinite;
             display: inline-block;
         }
 
         @keyframes spin {
-            100% {
+            to {
                 transform: rotate(360deg);
             }
         }
 
-        @keyframes fadeInDown {
+        @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: translateY(-20px);
+                transform: translateY(10px);
             }
 
             to {
                 opacity: 1;
                 transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .input-group {
+                flex-direction: column;
+            }
+
+            h1 {
+                font-size: 1.8rem;
             }
         }
     </style>
@@ -202,188 +251,203 @@
 
     <div class="container">
         <header>
-            <h1>2025년 국가기술자격 통계 조회</h1>
-            <p class="subtitle">Q-Net 2025년 최신 데이터를 기반으로 하는 자격증 현황 서비스</p>
+            <h1>2026 시험 일정 조회</h1>
+            <p class="subtitle">국가기술자격 기능사 종목별 2026년 상세 일정</p>
         </header>
 
-        <div class="card">
-            <div class="search-section">
-                <div class="input-group">
-                    <input type="text" id="qualName" placeholder="자격증 이름을 입력하세요 (예: 전기)">
-                    <button onclick="searchQualification()">검색</button>
+        <section class="search-container">
+            <div class="input-group">
+                <input type="text" id="searchInput" placeholder="기능사 종목명을 입력하세요 (예: 전기기능사)" autocomplete="off">
+                <button onclick="searchQual()">검색하기</button>
+            </div>
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p style="margin-top:0.5rem; font-size:0.8rem;">데이터를 불러오는 중...</p>
+            </div>
+            <ul id="search-results"></ul>
+        </section>
+
+        <section id="schedule-display" class="schedule-card">
+            <div class="schedule-header">
+                <span class="qual-name" id="displayQualName">자격증 이름</span>
+                <div id="displayQualCode" style="color:var(--text-muted); font-size:0.9rem; margin-top:0.3rem;">코드: 0000
                 </div>
-                <div id="selectionList" class="selection-list"></div>
             </div>
-        </div>
-
-        <div id="loading" class="loading">
-            <div class="spinner"></div>
-            <p style="margin-top: 1rem; color: var(--text-muted);">데이터를 처리 중입니다...</p>
-        </div>
-
-        <div id="results" class="results-grid">
-            <div class="card">
-                <h2>2025년 필기 합격률</h2>
-                <div class="chart-container"><canvas id="writtenChart"></canvas></div>
+            <div id="schedule-list">
+                <!-- Schedule items map here -->
             </div>
-            <div class="card">
-                <h2>2025년 실기 합격률</h2>
-                <div class="chart-container"><canvas id="practicalChart"></canvas></div>
-            </div>
-            <div class="card" style="grid-column: 1 / -1;">
-                <h2>2025년 연령별 취득 현황 (추정)</h2>
-                <div class="chart-container"><canvas id="ageChart"></canvas></div>
-            </div>
-        </div>
+        </section>
     </div>
 
     <script>
-        const API_CONFIG = {
-            KEY: '27a02c1980e3b8720793205e9161a24ceb593d71277501d3c6f3f6b9413c3911',
-            PROXY: 'https://api.allorigins.win/get?url=',
-            BASE_URL: 'http://openapi.q-net.or.kr/api/service/rest/'
-        };
+        const API_KEY = '27a02c1980e3b8720793205e9161a24ceb593d71277501d3c6f3f6b9413c3911';
+        const PROXY = 'https://api.allorigins.win/get?url=';
 
-        let charts = {};
+        // Q-Net API Endpoints
+        const LIST_API = 'http://openapi.q-net.or.kr/api/service/rest/InquiryListNationalQualifcationSVC/getList';
+        const SCHEDULE_API = 'http://openapi.q-net.or.kr/api/service/rest/InquiryTestInformationNTQSVC/getTestScheduleList';
 
         async function fetchData(url) {
             try {
-                const encodedUrl = encodeURIComponent(url);
-                const response = await fetch(`${API_CONFIG.PROXY}${encodedUrl}`);
-                if (!response.ok) throw new Error("Proxy error");
+                const response = await fetch(`${PROXY}${encodeURIComponent(url)}`);
                 const data = await response.json();
-                return new DOMParser().parseFromString(data.contents, "text/xml");
+                const parser = new DOMParser();
+                return parser.parseFromString(data.contents, "text/xml");
             } catch (e) {
-                console.error("Fetch failed:", e);
+                console.error("Fetch Error:", e);
                 return null;
             }
         }
 
-        async function searchQualification() {
-            const query = document.getElementById('qualName').value.trim();
+        async function searchQual() {
+            const query = document.getElementById('searchInput').value.trim();
             if (!query) return;
 
-            const list = document.getElementById('selectionList');
-            list.innerHTML = '';
-            list.classList.remove('active');
-            document.getElementById('results').classList.remove('active');
-            document.getElementById('loading').style.display = 'block';
+            const resultsUI = document.getElementById('search-results');
+            const loadingUI = document.getElementById('loading');
+            const displayUI = document.getElementById('schedule-display');
 
-            // Q-Net API 직접 호출 (인증키 포함)
-            const url = `${API_CONFIG.BASE_URL}InquiryListNationalQualifcationSVC/getList?serviceKey=${API_CONFIG.KEY}`;
-            const xml = await fetchData(url);
+            resultsUI.style.display = 'none';
+            displayUI.classList.remove('active');
+            loadingUI.style.display = 'block';
 
-            document.getElementById('loading').style.display = 'none';
+            const xml = await fetchData(`${LIST_API}?serviceKey=${API_KEY}`);
+            loadingUI.style.display = 'none';
 
-            if (!xml || xml.getElementsByTagName('resultCode')[0]?.textContent !== '00') {
-                alert("API 데이터를 불러올 수 없습니다. 인증키 또는 네트워크 상태를 확인해주세요.");
+            if (!xml) {
+                alert("API 데이터를 불러오는 데 실패했습니다.");
                 return;
             }
 
             const items = xml.getElementsByTagName('item');
             const matches = [];
+
             for (let item of items) {
-                // jmfldnm 또는 jmNm 태그 호환성 처리
                 const name = item.getElementsByTagName('jmfldnm')[0]?.textContent ||
                     item.getElementsByTagName('jmNm')[0]?.textContent || "";
                 const code = item.getElementsByTagName('jmcd')[0]?.textContent ||
                     item.getElementsByTagName('jmCd')[0]?.textContent || "";
 
-                if (name.includes(query)) {
+                // Filter by query and specifically "Craftsman (기능사)" if needed, 
+                // but the user said "기능사 시험 종목의 일부 이름을 검색"
+                if (name.includes(query) && name.includes('기능사')) {
                     matches.push({ name, code });
                 }
             }
 
-            if (matches.length > 0) {
-                list.classList.add('active');
-                matches.slice(0, 20).forEach(m => {
-                    const div = document.createElement('div');
-                    div.className = 'selection-item';
-                    div.innerHTML = `<span>${m.name}</span><span style="color:var(--text-muted); font-size:0.8rem;">${m.code}</span>`;
-                    div.onclick = () => get2025Stats(m);
-                    list.appendChild(div);
-                });
-            } else {
-                alert("일치하는 자격증을 찾을 수 없습니다.");
+            if (matches.length === 0) {
+                alert("기능사 종목 중 일치하는 결과가 없습니다. '기능사'를 포함하여 입력해보세요.");
+                return;
             }
+
+            resultsUI.innerHTML = '';
+            resultsUI.style.display = 'block';
+
+            matches.forEach(m => {
+                const li = document.createElement('li');
+                li.innerHTML = `<span>${m.name}</span><span class="code">코드: ${m.code}</span>`;
+                li.onclick = () => showSchedule(m.name, m.code);
+                resultsUI.appendChild(li);
+            });
         }
 
-        async function get2025Stats(qual) {
-            document.getElementById('qualName').value = qual.name;
-            document.getElementById('selectionList').classList.remove('active');
+        async function showSchedule(name, code) {
+            document.getElementById('search-results').style.display = 'none';
             document.getElementById('loading').style.display = 'block';
+            document.getElementById('schedule-display').classList.remove('active');
 
-            const url = `${API_CONFIG.BASE_URL}InquiryStatSVC/getTotExamList?serviceKey=${API_CONFIG.KEY}&baseYY=2025&jmCd=${qual.code}`;
+            // Fetch Schedule
+            const url = `${SCHEDULE_API}?serviceKey=${API_KEY}`;
             const xml = await fetchData(url);
-
             document.getElementById('loading').style.display = 'none';
 
-            const node = xml?.getElementsByTagName('item')[0];
-
-            // 2025년 데이터 파싱
-            let wRate = 0, pRate = 0, ageData = [0, 0, 0, 0, 0];
-
-            if (node) {
-                const pPs = parseInt(node.getElementsByTagName('pilpscnt6')[0]?.textContent) || 0;
-                const pRc = parseInt(node.getElementsByTagName('pilrccnt6')[0]?.textContent) || 0;
-                wRate = pRc > 0 ? ((pPs / pRc) * 100).toFixed(1) : (10 + Math.random() * 20).toFixed(1); // 2025년 초기 데이터 없는 경우 예시값
-
-                const sPs = parseInt(node.getElementsByTagName('silpacnt6')[0]?.textContent) || 0;
-                const sRc = parseInt(node.getElementsByTagName('silrccnt6')[0]?.textContent) || 0;
-                pRate = sRc > 0 ? ((sPs / sRc) * 100).toFixed(1) : (5 + Math.random() * 15).toFixed(1);
-
-                ageData = [
-                    parseInt(node.getElementsByTagName('pilpscnt1')[0]?.textContent) || (Math.random() * 50),
-                    parseInt(node.getElementsByTagName('pilpscnt2')[0]?.textContent) || (Math.random() * 200),
-                    parseInt(node.getElementsByTagName('pilpscnt3')[0]?.textContent) || (Math.random() * 100),
-                    parseInt(node.getElementsByTagName('pilpscnt4')[0]?.textContent) || (Math.random() * 50),
-                    parseInt(node.getElementsByTagName('pilpscnt5')[0]?.textContent) || (Math.random() * 20)
-                ];
+            if (!xml) {
+                alert("일정 데이터를 불러올 수 없거나 2026년 일정이 아직 공지되지 않았습니다.");
+                return;
             }
 
-            document.getElementById('results').classList.add('active');
-            renderCharts(wRate, pRate, ageData);
+            const items = xml.getElementsByTagName('item');
+            const scheduleList = document.getElementById('schedule-list');
+            scheduleList.innerHTML = '';
+
+            document.getElementById('displayQualName').innerText = name;
+            document.getElementById('displayQualCode').innerText = `종목코드: ${code}`;
+
+            let found = false;
+            for (let item of items) {
+                const desc = item.getElementsByTagName('description')[0]?.textContent || "";
+                // We focus on 2026 (or early 2026)
+                // Note: Q-Net API usually returns current/upcoming. 
+                // In Jan 2026, it should return 2026 schedules.
+
+                const regStart = item.getElementsByTagName('psexamstartdt')[0]?.textContent || "-";
+                const regEnd = item.getElementsByTagName('psexamenddt')[0]?.textContent || "-";
+                const testStart = item.getElementsByTagName('psexamstartdt')[0]?.textContent || "-"; // Placeholder
+
+                // Since Q-Net API tag names vary wildly by service, 
+                // I'll map common ones for a professional look.
+                const data = {
+                    title: desc,
+                    docReg: `${formatDate(item.getElementsByTagName('docregstartdt')[0]?.textContent)} ~ ${formatDate(item.getElementsByTagName('docregenddt')[0]?.textContent)}`,
+                    docExam: formatDate(item.getElementsByTagName('docexamstartdt')[0]?.textContent),
+                    pracReg: `${formatDate(item.getElementsByTagName('pracregstartdt')[0]?.textContent)} ~ ${formatDate(item.getElementsByTagName('pracregenddt')[0]?.textContent)}`,
+                    pracExam: `${formatDate(item.getElementsByTagName('pracexamstartdt')[0]?.textContent)} ~ ${formatDate(item.getElementsByTagName('pracexamenddt')[0]?.textContent)}`,
+                    passDate: formatDate(item.getElementsByTagName('pracpassstartdt')[0]?.textContent)
+                };
+
+                // Only show if it matches the current context (usually all items returned are relevant)
+                if (data.title) {
+                    const div = document.createElement('div');
+                    div.className = 'schedule-item';
+                    div.innerHTML = `
+                    <div class="schedule-title">${data.title}</div>
+                    <div class="date-grid">
+                        <div class="date-box">
+                            <span class="date-label">필기 원서접수</span>
+                            <span class="date-value">${data.docReg}</span>
+                        </div>
+                        <div class="date-box">
+                            <span class="date-label">필기 시험일</span>
+                            <span class="date-value">${data.docExam}</span>
+                        </div>
+                        <div class="date-box">
+                            <span class="date-label">실기 원서접수</span>
+                            <span class="date-value">${data.pracReg}</span>
+                        </div>
+                        <div class="date-box">
+                            <span class="date-label">실기 시험일</span>
+                            <span class="date-value">${data.pracExam}</span>
+                        </div>
+                        <div class="date-box">
+                            <span class="date-label">최종 합격자 발표</span>
+                            <span class="date-value">${data.passDate}</span>
+                        </div>
+                    </div>
+                `;
+                    scheduleList.appendChild(div);
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                scheduleList.innerHTML = `<p style="text-align:center; padding: 2rem; color:var(--text-muted);">표시할 2026년 일정이 없습니다.</p>`;
+            }
+
+            document.getElementById('schedule-display').classList.add('active');
+            document.getElementById('schedule-display').scrollIntoView({ behavior: 'smooth' });
         }
 
-        function renderCharts(w, p, age) {
-            if (charts.w) charts.w.destroy();
-            if (charts.p) charts.p.destroy();
-            if (charts.a) charts.a.destroy();
-
-            const commonOptions = {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { beginAtZero: true, max: 100, ticks: { color: "#94a3b8" }, grid: { color: "rgba(255,255,255,0.05)" } },
-                    x: { ticks: { color: "#94a3b8" } }
-                }
-            };
-
-            charts.w = new Chart(document.getElementById('writtenChart'), {
-                type: 'bar',
-                data: { labels: ['2025년 필기'], datasets: [{ data: [w], backgroundColor: '#6366f1', borderRadius: 8 }] },
-                options: commonOptions
-            });
-
-            charts.p = new Chart(document.getElementById('practicalChart'), {
-                type: 'bar',
-                data: { labels: ['2025년 실기'], datasets: [{ data: [p], backgroundColor: '#14b8a6', borderRadius: 8 }] },
-                options: commonOptions
-            });
-
-            charts.a = new Chart(document.getElementById('ageChart'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['10대', '20대', '30대', '40대', '50대 이상'],
-                    datasets: [{ data: age, backgroundColor: ['#6366f1', '#8b5cf6', '#d946ef', '#f43f5e', '#f59e0b'], borderWidth: 0 }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: true, position: 'right', labels: { color: '#94a3b8' } } }
-                }
-            });
+        function formatDate(str) {
+            if (!str || str === 'null' || str.length < 8) return "미정";
+            return `${str.substring(0, 4)}.${str.substring(4, 6)}.${str.substring(6, 8)}`;
         }
+
+        // Auto-complete or Enter key mapping
+        document.getElementById('searchInput').onkeypress = (e) => {
+            if (e.key === 'Enter') searchQual();
+        };
     </script>
+
 </body>
 
 </html>
