@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>국가기술자격 통계 조회 시스템</title>
+    <title>2025년 국가기술자격 통계 조회 시스템</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -42,7 +42,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1000px;
             width: 100%;
             display: flex;
             flex-direction: column;
@@ -60,13 +60,14 @@
             font-weight: 700;
             background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 0.5rem;
         }
 
         .subtitle {
             color: var(--text-muted);
-            font-size: 1rem;
+            font-size: 1.1rem;
         }
 
         .card {
@@ -76,46 +77,34 @@
             border: var(--glass-border);
             border-radius: 16px;
             padding: 2rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
             width: 100%;
         }
 
         .search-section {
             display: flex;
             flex-direction: column;
-            gap: 1.5rem;
+            gap: 1rem;
         }
 
         .input-group {
             display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
+            gap: 0.5rem;
         }
 
-        input[type="text"],
-        select {
+        input[type="text"] {
+            flex: 1;
             background: rgba(15, 23, 42, 0.6);
             border: 1px solid var(--border-color);
             color: var(--text-color);
             padding: 1rem 1.5rem;
             border-radius: 12px;
             font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        input[type="text"] {
-            flex: 2;
-            min-width: 250px;
-        }
-
-        select {
-            flex: 0.5;
-            min-width: 120px;
-            color-scheme: dark;
-        }
-
-        input:focus {
             outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
             border-color: var(--primary-color);
         }
 
@@ -123,26 +112,22 @@
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
             color: white;
             border: none;
-            padding: 1rem 2rem;
+            padding: 0 2rem;
             border-radius: 12px;
-            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            white-space: nowrap;
+            transition: transform 0.2s;
         }
 
         button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         }
 
         .selection-list {
-            margin-top: 1rem;
-            max-height: 250px;
+            max-height: 300px;
             overflow-y: auto;
-            border-radius: 12px;
             background: rgba(15, 23, 42, 0.4);
+            border-radius: 12px;
             border: 1px solid var(--border-color);
             display: none;
         }
@@ -157,57 +142,40 @@
             border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
+            transition: background 0.2s;
         }
 
         .selection-item:hover {
             background: rgba(99, 102, 241, 0.2);
         }
 
-        .selection-item .code {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-
-        .info-box {
-            font-size: 0.9rem;
-            color: #fbbf24;
-            background: rgba(251, 191, 36, 0.1);
-            padding: 1rem;
-            border-radius: 8px;
-        }
-
         .results-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 1.5rem;
-            margin-top: 2rem;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.5s ease;
+            display: none;
         }
 
-        .results-grid.visible {
-            opacity: 1;
-            transform: translateY(0);
+        .results-grid.active {
+            display: grid;
         }
 
         .chart-container {
             position: relative;
-            height: 300px;
-            width: 100%;
+            height: 250px;
+            margin-top: 1rem;
         }
 
         h2 {
-            font-size: 1.25rem;
-            margin-bottom: 1.5rem;
+            font-size: 1.2rem;
+            color: var(--text-color);
             border-left: 4px solid var(--primary-color);
-            padding-left: 1rem;
+            padding-left: 0.8rem;
         }
 
         .loading {
             text-align: center;
             padding: 2rem;
-            color: var(--text-muted);
             display: none;
         }
 
@@ -223,6 +191,16 @@
             }
         }
 
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+
         @keyframes spin {
             100% {
                 transform: rotate(360deg);
@@ -235,122 +213,96 @@
 
     <div class="container">
         <header>
-            <h1>국가기술자격 통계 조회 시스템</h1>
-            <p class="subtitle">Q-Net API를 활용한 연도별/연령별 자격증 현황</p>
+            <h1>2025년 국가기술자격 통계 조회</h1>
+            <p class="subtitle">Q-Net 2025년 최신 데이터를 기반으로 하는 자격증 현황 서비스</p>
         </header>
 
         <div class="card">
             <div class="search-section">
                 <div class="input-group">
-                    <input type="text" id="qualName" placeholder="자격증 종목명 입력 (예: 정보처리기사)" value="정보처리기사">
-                    <select id="baseYear">
-                        <option value="2025">2025년</option>
-                        <option value="2024">2024년</option>
-                        <option value="2023" selected>2023년</option>
-                        <option value="2022">2022년</option>
-                        <option value="2021">2021년</option>
-                    </select>
-                    <button onclick="searchQualification()">종목 검색</button>
+                    <input type="text" id="qualName" placeholder="자격증 이름을 입력하세요 (예: 정보)">
+                    <button onclick="searchQualification()">검색</button>
                 </div>
-
                 <div id="selectionList" class="selection-list"></div>
-
-                <div class="info-box">
-                    <strong>💡 안내:</strong> 보안 정책(CORS) 대응을 위해 프록시를 사용합니다. 데이터 로딩에 약간의 시간이 소요될 수 있습니다.
-                </div>
             </div>
         </div>
 
         <div id="loading" class="loading">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                style="animation: spin 1s linear infinite;">
-                <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
-            </svg>
-            <p style="margin-top: 0.5rem;">통계 데이터를 분석 중입니다...</p>
+            <div class="spinner"></div>
+            <p style="margin-top: 1rem; color: var(--text-muted);">2025년 데이터를 불러오는 중입니다...</p>
         </div>
 
         <div id="results" class="results-grid">
             <div class="card">
-                <h2>연도별 필기 합격률 추이</h2>
+                <h2>2025년 필기 합격률</h2>
                 <div class="chart-container"><canvas id="writtenChart"></canvas></div>
             </div>
             <div class="card">
-                <h2>연도별 실기 합격률 추이</h2>
+                <h2>2025년 실기 합격률</h2>
                 <div class="chart-container"><canvas id="practicalChart"></canvas></div>
             </div>
             <div class="card" style="grid-column: 1 / -1;">
-                <h2>연령대별 자격 취득자 현황 (기준년도)</h2>
+                <h2>2025년 연령별 취득자 분포</h2>
                 <div class="chart-container"><canvas id="ageChart"></canvas></div>
             </div>
         </div>
     </div>
 
     <script>
-        const CONFIG = {
-            SERVICE_KEY: '27a02c1980e3b8720793205e9161a24ceb593d71277501d3c6f3f6b9413c3911',
+        const API_CONFIG = {
+            KEY: '27a02c1980e3b8720793205e9161a24ceb593d71277501d3c6f3f6b9413c3911',
             PROXY: 'https://api.allorigins.win/get?url=',
-            API_BASE: 'http://openapi.q-net.or.kr/api/service/rest/'
+            BASE_URL: 'http://openapi.q-net.or.kr/api/service/rest/'
         };
 
-        let charts = { written: null, practical: null, age: null };
+        let charts = {};
 
-        async function fetchData(endpoint, params = {}) {
-            // 사용자가 지정한 baseYY 형식을 우선적으로 반영
-            let url = `${CONFIG.API_BASE}${endpoint}?serviceKey=${CONFIG.SERVICE_KEY}`;
-            if (params.year) {
-                url += `&baseYY=${params.year}`;
-                delete params.year;
-            }
-            for (let key in params) url += `&${key}=${params[key]}`;
+        async function callApi(endpoint, params = {}) {
+            let url = `${API_CONFIG.BASE_URL}${endpoint}?serviceKey=${API_CONFIG.KEY}`;
+            for (let k in params) url += `&${k}=${params[k]}`;
 
             try {
-                const resp = await fetch(`${CONFIG.PROXY}${encodeURIComponent(url)}`);
-                const json = await resp.json();
-                return new DOMParser().parseFromString(json.contents, "text/xml");
+                const response = await fetch(`${API_CONFIG.PROXY}${encodeURIComponent(url)}`);
+                const data = await response.json();
+                return new DOMParser().parseFromString(data.contents, "text/xml");
             } catch (e) {
-                console.error("Fetch Error:", e);
+                console.error("API Call failed", e);
                 return null;
             }
         }
 
         async function searchQualification() {
-            const name = document.getElementById('qualName').value.trim();
-            if (!name) return alert("검색어를 입력하세요.");
+            const query = document.getElementById('qualName').value.trim();
+            if (!query) return;
 
             const list = document.getElementById('selectionList');
-            list.classList.remove('active');
             list.innerHTML = '';
-            document.getElementById('results').classList.remove('visible');
-            showLoading(true);
+            list.classList.remove('active');
+            document.getElementById('results').classList.remove('active');
 
-            const xml = await fetchData('InquiryListNationalQualifcationSVC/getList');
-            if (!xml) {
-                showLoading(false);
-                return alert("API 통신 실패");
-            }
+            document.getElementById('loading').style.display = 'block';
+
+            // 2025년 종목 목록 로드 (InquiryListNationalQualifcationSVC)
+            const xml = await callApi('InquiryListNationalQualifcationSVC/getList');
+            document.getElementById('loading').style.display = 'none';
+
+            if (!xml) return alert("데이터를 불러올 수 없습니다.");
 
             const items = xml.getElementsByTagName('item');
             const matches = [];
-            const searchKey = name.replace(/\s/g, '').toLowerCase();
-
             for (let item of items) {
-                const jmNm = item.getElementsByTagName('jmNm')[0]?.textContent ||
-                    item.getElementsByTagName('jmfldnm')[0]?.textContent || "";
-                const jmCd = item.getElementsByTagName('jmCd')[0]?.textContent || "";
-                if (jmNm.replace(/\s/g, '').toLowerCase().includes(searchKey)) {
-                    matches.push({ name: jmNm, code: jmCd });
-                }
+                const name = item.getElementsByTagName('jmNm')[0]?.textContent || item.getElementsByTagName('jmfldnm')[0]?.textContent || "";
+                const code = item.getElementsByTagName('jmCd')[0]?.textContent || "";
+                if (name.includes(query)) matches.push({ name, code });
             }
 
-            showLoading(false);
             if (matches.length > 0) {
                 list.classList.add('active');
-                matches.slice(0, 10).forEach(m => {
+                matches.slice(0, 15).forEach(m => {
                     const div = document.createElement('div');
                     div.className = 'selection-item';
-                    div.innerHTML = `<span>${m.name}</span><span class="code">${m.code}</span>`;
-                    div.onclick = () => selectItem(m);
+                    div.innerHTML = `<span>${m.name}</span><span style="color:var(--text-muted);font-size:0.8rem;">${m.code}</span>`;
+                    div.onclick = () => get2025Stats(m);
                     list.appendChild(div);
                 });
             } else {
@@ -358,96 +310,91 @@
             }
         }
 
-        async function selectItem(item) {
-            document.getElementById('qualName').value = item.name;
+        async function get2025Stats(qual) {
+            document.getElementById('qualName').value = qual.name;
             document.getElementById('selectionList').classList.remove('active');
-            const selectedYear = document.getElementById('baseYear').value;
+            document.getElementById('loading').style.display = 'block';
 
-            showLoading(true);
+            // 2025년 전용 API 호출
+            const xml = await callApi('InquiryStatSVC/getTotExamList', { baseYY: '2025', jmCd: qual.code });
+            document.getElementById('loading').style.display = 'none';
 
-            // 단일 기준 연도 데이터 표시
-            const years = [selectedYear];
-            let writtenData = [];
-            let practicalData = [];
-            let ageDist = { '10대': 0, '20대': 0, '30대': 0, '40대': 0, '50대': 0, '60대+': 0 };
+            if (!xml) return alert("2025년 통계 데이터를 가져오지 못했습니다.");
 
-            try {
-                // 선택한 기준 연도의 데이터만 호출
-                const xml = await fetchData('InquiryStatSVC/getTotExamList', { year: selectedYear, jmCd: item.code });
-                const node = xml?.getElementsByTagName('item')[0];
+            const node = xml.getElementsByTagName('item')[0];
 
-                if (node) {
-                    const pPs = parseInt(node.getElementsByTagName('pilpscnt6')[0]?.textContent) || 0;
-                    const pRc = parseInt(node.getElementsByTagName('pilrccnt6')[0]?.textContent) || 0;
-                    writtenData.push(pRc > 0 ? ((pPs / pRc) * 100).toFixed(1) : 0);
+            // 데이터 준비 (API 데이터가 없는 경우를 대비한 가공)
+            let writtenRate = 0;
+            let practicalRate = 0;
+            let ageData = [0, 0, 0, 0, 0];
 
-                    const sPs = parseInt(node.getElementsByTagName('silpacnt6')[0]?.textContent) || 0;
-                    const sRc = parseInt(node.getElementsByTagName('silrccnt6')[0]?.textContent) || 0;
-                    practicalData.push(sRc > 0 ? ((sPs / sRc) * 100).toFixed(1) : 0);
+            if (node) {
+                const pPs = parseInt(node.getElementsByTagName('pilpscnt6')[0]?.textContent) || 0;
+                const pRc = parseInt(node.getElementsByTagName('pilrccnt6')[0]?.textContent) || 0;
+                writtenRate = pRc > 0 ? ((pPs / pRc) * 100).toFixed(1) : 0;
 
-                    ageDist['10대'] = parseInt(node.getElementsByTagName('pilpscnt1')[0]?.textContent) || 0;
-                    ageDist['20대'] = parseInt(node.getElementsByTagName('pilpscnt2')[0]?.textContent) || 0;
-                    ageDist['30대'] = parseInt(node.getElementsByTagName('pilpscnt3')[0]?.textContent) || 0;
-                    ageDist['40대'] = parseInt(node.getElementsByTagName('pilpscnt4')[0]?.textContent) || 0;
-                    ageDist['50대'] = parseInt(node.getElementsByTagName('pilpscnt5')[0]?.textContent) || 0;
-                    ageDist['60대+'] = 0;
-                } else {
-                    writtenData.push(0);
-                    practicalData.push(0);
-                }
+                const sPs = parseInt(node.getElementsByTagName('silpacnt6')[0]?.textContent) || 0;
+                const sRc = parseInt(node.getElementsByTagName('silrccnt6')[0]?.textContent) || 0;
+                practicalRate = sRc > 0 ? ((sPs / sRc) * 100).toFixed(1) : 0;
 
-                if (writtenData[0] == 0 && practicalData[0] == 0) {
-                    console.warn("No data for the selected year and qualification.");
-                }
-
-            } catch (err) {
-                console.error("Processing Error:", err);
-                alert("통계 데이터를 가져오는 중 오류가 발생했습니다.");
+                ageData = [
+                    parseInt(node.getElementsByTagName('pilpscnt1')[0]?.textContent) || 0,
+                    parseInt(node.getElementsByTagName('pilpscnt2')[0]?.textContent) || 0,
+                    parseInt(node.getElementsByTagName('pilpscnt3')[0]?.textContent) || 0,
+                    parseInt(node.getElementsByTagName('pilpscnt4')[0]?.textContent) || 0,
+                    parseInt(node.getElementsByTagName('pilpscnt5')[0]?.textContent) || 0
+                ];
             }
 
-            renderCharts(years, writtenData, practicalData, ageDist);
-            showLoading(false);
-            document.getElementById('results').classList.add('visible');
+            document.getElementById('results').classList.add('active');
+            renderCharts(writtenRate, practicalRate, ageData);
         }
 
-        function renderCharts(years, written, practical, ageDist) {
-            if (charts.written) charts.written.destroy();
-            if (charts.practical) charts.practical.destroy();
-            if (charts.age) charts.age.destroy();
+        function renderCharts(wRate, pRate, ageData) {
+            if (charts.w) charts.w.destroy();
+            if (charts.p) charts.p.destroy();
+            if (charts.a) charts.a.destroy();
+
+            const ctxW = document.getElementById('writtenChart').getContext('2d');
+            const ctxP = document.getElementById('practicalChart').getContext('2d');
+            const ctxA = document.getElementById('ageChart').getContext('2d');
 
             const commonOptions = {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.05)' } } }
+                scales: { y: { beginAtZero: true, max: 100, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { ticks: { color: '#94a3b8' } } }
             };
 
-            charts.written = new Chart(document.getElementById('writtenChart'), {
-                type: 'line',
-                data: { labels: years, datasets: [{ data: written, borderColor: '#6366f1', tension: 0.4, fill: true, backgroundColor: 'rgba(99,102,241,0.1)' }] },
-                options: commonOptions
-            });
-
-            charts.practical = new Chart(document.getElementById('practicalChart'), {
-                type: 'line',
-                data: { labels: years, datasets: [{ data: practical, borderColor: '#14b8a6', tension: 0.4, fill: true, backgroundColor: 'rgba(20,184,166,0.1)' }] },
-                options: commonOptions
-            });
-
-            charts.age = new Chart(document.getElementById('ageChart'), {
+            charts.w = new Chart(ctxW, {
                 type: 'bar',
+                data: { labels: ['2025년 필기'], datasets: [{ data: [wRate], backgroundColor: '#6366f1', borderRadius: 8 }] },
+                options: commonOptions
+            });
+
+            charts.p = new Chart(ctxP, {
+                type: 'bar',
+                data: { labels: ['2025년 실기'], datasets: [{ data: [pRate], backgroundColor: '#14b8a6', borderRadius: 8 }] },
+                options: commonOptions
+            });
+
+            charts.a = new Chart(ctxA, {
+                type: 'doughnut',
                 data: {
-                    labels: Object.keys(ageDist),
+                    labels: ['10대', '20대', '30대', '40대', '50대 이상'],
                     datasets: [{
-                        data: Object.values(ageDist),
-                        backgroundColor: ['#6366f1', '#8b5cf6', '#d946ef', '#f43f5e', '#f59e0b', '#10b981']
+                        data: ageData,
+                        backgroundColor: ['#6366f1', '#8b5cf6', '#d946ef', '#f43f5e', '#f59e0b'],
+                        borderWidth: 0
                     }]
                 },
-                options: { ...commonOptions, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } } } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: true, position: 'right', labels: { color: '#94a3b8' } } }
+                }
             });
         }
-
-        function showLoading(show) { document.getElementById('loading').style.display = show ? 'block' : 'none'; }
     </script>
 </body>
 
