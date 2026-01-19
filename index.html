@@ -383,45 +383,76 @@
         }
 
         async function fetchMatchingQualifications(name, key) {
-            // Q-Net API endpoint for full list of qualifications
             const rawUrl = `http://openapi.q-net.or.kr/api/service/rest/InquiryListNationalQualifcationSVC/getList?serviceKey=${key}`;
-            const targetUrl = USE_PROXY ? PROXY_URL + encodeURIComponent(rawUrl) : rawUrl;
+
+            // Try different fetch strategies
+            const tryFetch = async (url) => {
+                const response = await fetch(url);
+                if (!response.ok) return null;
+                if (url.includes('allorigins.win')) {
+                    const json = await response.json();
+                    return json.contents;
+                }
+                return await response.text();
+            };
 
             try {
-                const response = await fetch(targetUrl);
-                if (!response.ok) throw new Error('Network response was not ok');
-
-                let text;
-                if (USE_PROXY && targetUrl.includes('allorigins.win')) {
-                    const json = await response.json();
-                    text = json.contents;
-                } else {
-                    text = await response.text();
+                let text = null;
+                console.log("Attempting direct fetch...");
+                try {
+                    text = await tryFetch(rawUrl);
+                } catch (e) {
+                    console.warn("Direct fetch failed, trying proxy...");
+                    text = await tryFetch(PROXY_URL + encodeURIComponent(rawUrl));
                 }
+
+                if (!text) throw new Error("Could not fetch data from any source");
 
                 const parser = new DOMParser();
                 const xmlDoc = parser.parseFromString(text, "text/xml");
 
-                // Check if the response contains items
+                // Debug: Log the first few items to see the structure
                 const items = xmlDoc.getElementsByTagName('item');
+                console.log(`Received ${items.length} items from API.`);
+
                 const matches = [];
+                const searchKey = name.replace(/\s/g, '').toLowerCase();
 
                 for (let i = 0; i < items.length; i++) {
                     const item = items[i];
-                    // Q-Net API에 따라 jmNm 또는 jmfldnm 태그를 혼용해서 사용함
-                    const jmNm = item.getElementsByTagName('jmNm')[0]?.textContent ||
-                        item.getElementsByTagName('jmfldnm')[0]?.textContent ||
-                        item.getElementsByTagName('jmfldNm')[0]?.textContent || ""; // 대소문자 변종 대응
-                    const jmCd = item.getElementsByTagName('jmCd')[0]?.textContent || "";
 
-                    // 한글 포함 여부 확인 (공백 제거 후 비교하여 검색 효율 증대)
-                    if (jmNm.replace(/\s/g, '').includes(name.replace(/\s/g, ''))) {
+                    // Q-Net API often uses different tags depending on the specific endpoint version
+                    const nameTags = ['jmNm', 'jmfldnm', 'jmfldNm', 'jmName'];
+                    let jmNm = "";
+                    for (const tag of nameTags) {
+                        const val = item.getElementsByTagName(tag)[0]?.textContent;
+                        if (val) { jmNm = val; break; }
+                    }
+
+                    const codeTags = ['jmCd', 'jmcode', 'jmCode'];
+                    let jmCd = "";
+                    for (const tag of codeTags) {
+                        const val = item.getElementsByTagName(tag)[0]?.textContent;
+                        if (val) { jmCd = val; break; }
+                    }
+
+                    if (jmNm && jmNm.replace(/\s/g, '').toLowerCase().includes(searchKey)) {
                         matches.push({ name: jmNm, code: jmCd });
                     }
                 }
+
+                // Sort results: matches starting with the search key first
+                matches.sort((a, b) => {
+                    const aStart = a.name.replace(/\s/g, '').toLowerCase().startsWith(searchKey);
+                    const bStart = b.name.replace(/\s/g, '').toLowerCase().startsWith(searchKey);
+                    if (aStart && !bStart) return -1;
+                    if (!aStart && bStart) return 1;
+                    return a.name.localeCompare(b.name);
+                });
+
                 return matches;
             } catch (e) {
-                console.error("Fetch failed:", e);
+                console.error("Fetch failed entirely:", e);
                 return null;
             }
         }
