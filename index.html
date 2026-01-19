@@ -50,6 +50,7 @@
             font-weight: 700;
             background: linear-gradient(to right, #60a5fa, #34d399);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 0.5rem;
         }
@@ -288,28 +289,63 @@
         const SCHEDULE_API = 'http://openapi.q-net.or.kr/api/service/rest/InquiryTestInformationNTQSVC/getCList';
         const DETAIL_SCHEDULE_API = 'http://openapi.q-net.or.kr/api/service/rest/InquiryTestInformationNTQSVC/getTestScheduleList';
 
-        async function fetchData(url) {
+        async function fetchData(url, timeout = 7000) {
             const proxies = [
+                '#DIRECT#',
                 'https://api.allorigins.win/get?url=',
-                'https://corsproxy.io/?'
+                'https://corsproxy.io/?',
+                'https://thingproxy.freeboard.io/fetch/'
             ];
 
             for (let proxy of proxies) {
+                const controller = new AbortController();
+                const signal = controller.signal;
+                const timeoutId = setTimeout(() => controller.abort(), timeout);
+
                 try {
-                    const response = await fetch(`${proxy}${encodeURIComponent(url)}`);
+                    const finalUrl = proxy === '#DIRECT#' ? url : `${proxy}${encodeURIComponent(url)}`;
+                    console.log(`Attempting via ${proxy}: ${finalUrl}`);
+
+                    const response = await fetch(finalUrl, { signal });
+                    clearTimeout(timeoutId);
+
                     if (!response.ok) continue;
-                    const data = await response.json();
-                    const contents = data.contents || data; // Handle different proxy response styles
+
+                    let contents;
+                    if (proxy.includes('allorigins')) {
+                        const data = await response.json();
+                        contents = data.contents;
+                    } else {
+                        contents = await response.text();
+                    }
+
+                    if (!contents || contents.trim() === "") continue;
+
                     const parser = new DOMParser();
                     const xml = parser.parseFromString(contents, "text/xml");
-                    console.log(`API Response from ${proxy}:`, xml);
+
+                    // Check if actually XML and not some HTML error page
+                    if (xml.getElementsByTagName('parsererror').length > 0) continue;
+
+                    console.log(`Success via ${proxy}`);
                     return xml;
                 } catch (e) {
-                    console.error(`Proxy ${proxy} failed:`, e);
+                    clearTimeout(timeoutId);
+                    console.warn(`Attempt via ${proxy} failed:`, e.name === 'AbortError' ? 'Timeout' : e.message);
                 }
             }
             return null;
         }
+
+        const MOCK_QUAL_LIST = [
+            { name: "전기기능사", code: "6335" },
+            { name: "정보처리기능사", code: "1320" },
+            { name: "컴퓨터그래픽스운용기능사", code: "7796" },
+            { name: "조리기능사(한식)", code: "2971" },
+            { name: "굴착기운전기능사", code: "7140" },
+            { name: "지게차운전기능사", code: "7132" },
+            { name: "웹디자인기능사", code: "7798" }
+        ];
 
         async function searchQual() {
             const query = document.getElementById('searchInput').value.trim();
@@ -323,36 +359,36 @@
             displayUI.classList.remove('active');
             loadingUI.style.display = 'block';
 
-            // Fetch qualification list
-            const xml = await fetchData(`${LIST_API}?serviceKey=${API_KEY}`);
+            let xml = await fetchData(`${LIST_API}?serviceKey=${API_KEY}`, 5000);
             loadingUI.style.display = 'none';
 
-            if (!xml) {
-                alert("네트워크 통신에 실패했습니다. 프록시 서버나 인터넷 연결을 확인해주세요.");
-                return;
-            }
+            let matches = [];
 
-            const items = xml.getElementsByTagName('item');
-            if (items.length === 0) {
-                alert("자격증 목록을 가져오지 못했습니다. API 키 유효성을 확인해주세요.");
-                return;
-            }
+            if (xml) {
+                const items = xml.getElementsByTagName('item');
+                for (let item of items) {
+                    const name = (item.getElementsByTagName('jmfldnm')[0]?.textContent ||
+                        item.getElementsByTagName('jmNm')[0]?.textContent || "").trim();
+                    const code = (item.getElementsByTagName('jmcd')[0]?.textContent ||
+                        item.getElementsByTagName('jmCd')[0]?.textContent || "").trim();
 
-            const matches = [];
-            for (let item of items) {
-                const name = (item.getElementsByTagName('jmfldnm')[0]?.textContent ||
-                    item.getElementsByTagName('jmNm')[0]?.textContent || "").trim();
-                const code = (item.getElementsByTagName('jmcd')[0]?.textContent ||
-                    item.getElementsByTagName('jmCd')[0]?.textContent || "").trim();
-
-                if (name.includes(query) && name.includes('기능사')) {
-                    matches.push({ name, code });
+                    if (name.includes(query) && name.includes('기능사')) {
+                        matches.push({ name, code });
+                    }
                 }
             }
 
+            // Fallback to minimal mock search if API fails completely
             if (matches.length === 0) {
-                alert("기능사 종목 중 일치하는 결과가 없습니다. '기능사'를 포함해 입력해보세요.");
-                return;
+                console.warn("API list fetch failed or no results. Using narrow local search.");
+                matches = MOCK_QUAL_LIST.filter(m => m.name.includes(query));
+
+                if (matches.length > 0) {
+                    alert("실시간 API 연결이 불안정하여 주요 종목 결과만 표시합니다.");
+                } else {
+                    alert("네트워크 통신에 실패했습니다. 프록시 서버나 인터넷 연결을 확인하거나 잠시 후 다시 시도해 주세요.");
+                    return;
+                }
             }
 
             resultsUI.innerHTML = '';
